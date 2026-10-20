@@ -51,6 +51,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.goals.app.ui.components.card
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -97,6 +99,9 @@ fun ProjectDetailScreen(
     var menu by remember { mutableStateOf(false) }
 
     Scaffold(
+
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
@@ -118,7 +123,7 @@ fun ProjectDetailScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
     ) { padding ->
@@ -142,7 +147,7 @@ fun ProjectDetailScreen(
                 }
                 Spacer(Modifier.height(8.dp))
             }
-            PrimaryTabRow(selectedTabIndex = tab, containerColor = MaterialTheme.colorScheme.background) {
+            PrimaryTabRow(selectedTabIndex = tab, containerColor = Color.Transparent) {
                 Tabs.forEachIndexed { i, title ->
                     Tab(
                         selected = tab == i,
@@ -291,8 +296,7 @@ private fun MilestonesTab(
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = GoalsTheme.rowHeight)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(scheme.surfaceContainerLow),
+                    .card(shape = MaterialTheme.shapes.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(

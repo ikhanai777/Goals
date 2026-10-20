@@ -29,6 +29,8 @@ import com.goals.app.data.Cadence
 import com.goals.app.data.Density
 import com.goals.app.data.GoalType
 import com.goals.app.data.ThemeMode
+import com.goals.app.data.ThemeStyle
+import com.goals.app.ui.theme.AppBackground
 import com.goals.app.ui.AddButton
 import com.goals.app.ui.AppNavigationBar
 import com.goals.app.ui.AppState
@@ -62,12 +64,16 @@ class ScreenshotTest {
         name: String,
         theme: ThemeMode = ThemeMode.LIGHT,
         density: Density = Density.COMFORTABLE,
+        style: ThemeStyle = ThemeStyle.CLASSIC,
         content: @Composable BoxScope.(AppState) -> Unit,
     ) {
-        val state = SampleData.state(AppSettings(theme = theme, density = density))
+        val state = SampleData.state(AppSettings(theme = theme, density = density, style = style))
         compose.setContent {
-            GoalsTheme(theme, density) {
-                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) { content(state) }
+            GoalsTheme(theme, density, style = style) {
+                Box(Modifier.fillMaxSize()) {
+                    AppBackground()
+                    content(state)
+                }
             }
         }
         compose.onRoot().captureRoboImage("build/outputs/roborazzi/$name.png")
@@ -77,6 +83,8 @@ class ScreenshotTest {
     @Composable
     private fun Chrome(route: String, fab: Boolean = true, content: @Composable () -> Unit) {
         Scaffold(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
             bottomBar = { AppNavigationBar(route) {} },
             floatingActionButton = { if (fab) AddButton({}, {}) },
         ) { padding -> Box(Modifier.padding(padding)) { content() } }
@@ -137,6 +145,26 @@ class ScreenshotTest {
     }
 
     @Test fun settings() = shot("10_settings") { s ->
+        Chrome("settings", fab = false) { SettingsScreen(s.settings, "1.0.0", {}, {}, {}, {}) }
+    }
+
+    @Test fun fire_today() = shot("11_fire_today", style = ThemeStyle.FIRE_ICE) { s ->
+        Chrome("today") { TodayScreen(s, TodayFilter.TODAY, {}, noRows, {}, {}, {}) }
+    }
+
+    @Test fun fire_goals_library() = shot("12_fire_goals_library", style = ThemeStyle.FIRE_ICE) { s ->
+        Chrome("goals") { GoalsScreen(s, {}, {}, {}) }
+    }
+
+    @Test fun fire_goal_detail() = shot("13_fire_goal_detail", style = ThemeStyle.FIRE_ICE) { s ->
+        GoalDetailScreen(s, s.goal("run")!!, {}, {}, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test fun fire_project_detail() = shot("14_fire_project_detail", style = ThemeStyle.FIRE_ICE) { s ->
+        ProjectDetailScreen(s, s.project("portfolio")!!, noRows, {}, {}, {}, {}, {}, {}, {}, {})
+    }
+
+    @Test fun fire_settings() = shot("15_fire_settings", style = ThemeStyle.FIRE_ICE) { s ->
         Chrome("settings", fab = false) { SettingsScreen(s.settings, "1.0.0", {}, {}, {}, {}) }
     }
 }

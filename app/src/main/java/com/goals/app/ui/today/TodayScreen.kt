@@ -27,9 +27,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -40,6 +37,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.goals.app.ui.components.card
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -56,6 +55,7 @@ import com.goals.app.ui.RowActions
 import com.goals.app.ui.TodayFilter
 import com.goals.app.ui.buildTodaySections
 import com.goals.app.ui.components.EmptyState
+import com.goals.app.ui.components.SegmentedControl
 import com.goals.app.ui.components.ProgressRing
 import com.goals.app.ui.components.SectionHeader
 import com.goals.app.ui.components.SwipeGoalRow
@@ -86,6 +86,9 @@ fun TodayScreen(
     var collapsed by rememberSaveable { mutableStateOf(setOf<String>()) }
 
     Scaffold(
+
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
@@ -103,7 +106,7 @@ fun TodayScreen(
                     }
                     Spacer(Modifier.width(16.dp))
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
     ) { padding ->
@@ -113,21 +116,7 @@ fun TodayScreen(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             item(key = "filter") {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().height(36.dp)) {
-                    TodayFilter.entries.forEachIndexed { i, f ->
-                        SegmentedButton(
-                            selected = f == filter,
-                            onClick = { onFilter(f) },
-                            shape = SegmentedButtonDefaults.itemShape(i, TodayFilter.entries.size),
-                            icon = {},
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = MaterialTheme.colorScheme.primary,
-                                activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                                inactiveContainerColor = MaterialTheme.colorScheme.background,
-                            ),
-                        ) { Text(f.label, style = MaterialTheme.typography.labelMedium) }
-                    }
-                }
+                SegmentedControl(TodayFilter.entries, filter, { it.label }, onFilter)
             }
             if (sections.isEmpty()) {
                 item(key = "empty") {
@@ -221,8 +210,7 @@ private fun MilestoneRow(item: MilestoneItem, today: LocalDate, onToggle: () -> 
         Modifier
             .fillMaxWidth()
             .heightIn(min = GoalsTheme.rowHeight)
-            .clip(MaterialTheme.shapes.small)
-            .background(scheme.surfaceContainerLow)
+            .card(shape = MaterialTheme.shapes.small)
             .clickable(onClick = onOpen)
             .padding(start = 14.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

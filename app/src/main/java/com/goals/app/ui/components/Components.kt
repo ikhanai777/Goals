@@ -43,7 +43,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -70,21 +73,29 @@ fun ProgressBar(
     modifier: Modifier = Modifier,
     height: Dp = 4.dp,
     color: Color = MaterialTheme.colorScheme.primary,
+    brush: Brush = SolidColor(color),
+    glowColor: Color? = null,
 ) {
     val animated by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(200), label = "progress")
-    Box(
-        modifier
-            .height(height)
-            .clip(RoundedCornerShape(50))
-            .background(GoalsTheme.extra.track),
-    ) {
-        Box(
-            Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(animated)
-                .clip(RoundedCornerShape(50))
-                .background(color),
-        )
+    val track = GoalsTheme.extra.track
+    Canvas(modifier.height(height)) {
+        val r = CornerRadius(size.height / 2)
+        drawRoundRect(track, cornerRadius = r)
+        if (animated <= 0f) return@Canvas
+        val w = size.width * animated
+        if (glowColor != null) {
+            // Halo around the filled part only.
+            for (i in 1..3) {
+                val g = size.height * i * 0.8f
+                drawRoundRect(
+                    glowColor.copy(alpha = 0.16f / i),
+                    topLeft = Offset(-g / 2, -g / 2),
+                    size = Size(w + g, size.height + g),
+                    cornerRadius = CornerRadius(size.height / 2 + g / 2),
+                )
+            }
+        }
+        drawRoundRect(brush, size = Size(w, size.height), cornerRadius = r)
     }
 }
 
@@ -116,6 +127,12 @@ fun ProgressRing(
 fun LogControl(item: GoalItem, onLog: () -> Unit, modifier: Modifier = Modifier) {
     val haptics = LocalHapticFeedback.current
     val scheme = MaterialTheme.colorScheme
+    val fireIce = GoalsTheme.style.fireIce
+    val accent = toneColor(item.tone())
+    // Classic uses the cobalt container; Fire & Ice tints with the row's tone.
+    val container = if (fireIce) accent.copy(alpha = 0.18f) else scheme.primaryContainer
+    val onContainer = if (fireIce) accent else scheme.onPrimaryContainer
+    val ring = if (fireIce) accent.copy(alpha = 0.7f) else scheme.outline
     val met = item.progress.met
     val description = "${item.goal.title}, ${item.goal.formatProgress(item.progress.value)}, " +
         when {
@@ -144,13 +161,13 @@ fun LogControl(item: GoalItem, onLog: () -> Unit, modifier: Modifier = Modifier)
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Rounded.SkipNext, null, Modifier.size(14.dp), tint = scheme.secondary) }
             item.goal.type == GoalType.CHECK -> Box(
-                Modifier.size(24.dp).clip(CircleShape).border(1.5.dp, scheme.outline, CircleShape),
+                Modifier.size(24.dp).clip(CircleShape).border(1.5.dp, ring, CircleShape),
             )
             else -> Box(
                 Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(if (met) scheme.primary else scheme.primaryContainer),
+                    .background(if (met) scheme.primary else container),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -161,7 +178,7 @@ fun LogControl(item: GoalItem, onLog: () -> Unit, modifier: Modifier = Modifier)
                     },
                     null,
                     Modifier.size(18.dp),
-                    tint = if (met) scheme.onPrimary else scheme.onPrimaryContainer,
+                    tint = if (met) scheme.onPrimary else onContainer,
                 )
             }
         }
@@ -169,27 +186,26 @@ fun LogControl(item: GoalItem, onLog: () -> Unit, modifier: Modifier = Modifier)
 }
 
 @Composable
-fun AreaBar(colorIndex: Int?, modifier: Modifier = Modifier) {
+fun AreaBar(colorIndex: Int?, modifier: Modifier = Modifier, color: Color? = null) {
+    val fill = color ?: colorIndex?.let { AreaColors[it % AreaColors.size] } ?: Color.Transparent
     Box(
         modifier
             .width(4.dp)
             .fillMaxHeight()
+            .then(if (color != null && GoalsTheme.style.fireIce) Modifier.glow(fill, 2.dp, spread = 8.dp, strength = 1.6f) else Modifier)
             .clip(RoundedCornerShape(2.dp))
-            .background(colorIndex?.let { AreaColors[it % AreaColors.size] } ?: Color.Transparent),
+            .background(fill),
     )
 }
 
 @Composable
-fun StreakBadge(streak: Int) {
+fun StreakBadge(streak: Int, color: Color = MaterialTheme.colorScheme.secondary) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            Icons.Rounded.LocalFireDepartment, null,
-            Modifier.size(12.dp), tint = MaterialTheme.colorScheme.secondary,
-        )
+        Icon(Icons.Rounded.LocalFireDepartment, null, Modifier.size(12.dp), tint = color)
         Text(
             "$streak",
             style = NumericStyle.copy(fontSize = MaterialTheme.typography.labelSmall.fontSize),
-            color = MaterialTheme.colorScheme.secondary,
+            color = color,
         )
     }
 }
@@ -205,7 +221,10 @@ fun GoalRowContent(
     meta: String? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val fireIce = GoalsTheme.style.fireIce
     val p = item.progress
+    val tone = item.tone()
+    val accent = toneColor(tone)
     val barColor = when {
         p.overdue -> scheme.error
         p.met -> GoalsTheme.extra.success
@@ -215,17 +234,23 @@ fun GoalRowContent(
         modifier
             .fillMaxWidth()
             .heightIn(min = GoalsTheme.rowHeight)
-            .clip(MaterialTheme.shapes.small)
-            .background(scheme.surfaceContainerLow)
+            .card(tone)
             .clickable(onClick = onOpen)
             .padding(start = 0.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AreaBar(item.area?.colorIndex, Modifier.height(GoalsTheme.rowHeight - 16.dp))
+        AreaBar(
+            item.area?.colorIndex, Modifier.height(GoalsTheme.rowHeight - 16.dp),
+            color = if (fireIce && tone != Tone.NEUTRAL) accent else null,
+        )
         Spacer(Modifier.width(10.dp))
         Icon(
             iconFor(item.goal.icon), null, Modifier.size(20.dp),
-            tint = if (p.done) GoalsTheme.extra.muted else scheme.onSurface,
+            tint = when {
+                p.done -> GoalsTheme.extra.muted
+                fireIce -> accent
+                else -> scheme.onSurface
+            },
         )
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).padding(vertical = 8.dp)) {
@@ -239,14 +264,21 @@ fun GoalRowContent(
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text(item.goal.formatProgress(p.value), style = NumericStyle, color = GoalsTheme.extra.muted)
+                Text(
+                    item.goal.formatProgress(p.value), style = NumericStyle,
+                    color = if (fireIce && !p.done) accent else GoalsTheme.extra.muted,
+                )
             }
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ProgressBar(p.fraction, Modifier.weight(1f), color = barColor)
+                if (fireIce) {
+                    ProgressBar(p.fraction, Modifier.weight(1f), brush = toneBrush(tone), glowColor = accent.takeIf { tone != Tone.NEUTRAL })
+                } else {
+                    ProgressBar(p.fraction, Modifier.weight(1f), color = barColor)
+                }
                 if (showStreak && p.currentStreak >= 2) {
                     Spacer(Modifier.width(8.dp))
-                    StreakBadge(p.currentStreak)
+                    StreakBadge(p.currentStreak, if (fireIce) accent else MaterialTheme.colorScheme.secondary)
                 }
             }
             if (meta != null && GoalsTheme.rowHeight > 48.dp) {
@@ -299,6 +331,8 @@ fun SwipeGoalRow(
         enableDismissFromStartToEnd = !(item.goal.type == GoalType.CHECK && item.progress.met),
         enableDismissFromEndToStart = !item.progress.done,
         backgroundContent = {
+            // Only while dragging: Fire & Ice cards are translucent and would show it at rest.
+            if (state.dismissDirection == SwipeToDismissBoxValue.Settled) return@SwipeToDismissBox
             val toEnd = state.dismissDirection == SwipeToDismissBoxValue.StartToEnd
             val scheme = MaterialTheme.colorScheme
             Row(
@@ -373,8 +407,7 @@ fun CadenceBadge(item: GoalItem) {
 fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier
-            .clip(MaterialTheme.shapes.small)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .card()
             .padding(horizontal = 10.dp, vertical = 8.dp),
     ) {
         Text(value, style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"))
@@ -391,6 +424,58 @@ fun EmptyState(text: String, action: String?, onAction: () -> Unit, modifier: Mo
         Text(text, style = MaterialTheme.typography.bodyMedium, color = GoalsTheme.extra.muted)
         if (action != null) {
             androidx.compose.material3.TextButton(onClick = onAction) { Text(action) }
+        }
+    }
+}
+
+/** Pill-shaped single-choice control; in Fire & Ice the selected segment burns orange. */
+@Composable
+fun <T> SegmentedControl(
+    options: List<T>,
+    selected: T,
+    label: (T) -> String,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val style = GoalsTheme.style
+    val shape = RoundedCornerShape(50)
+    val edge = if (style.fireIce) style.ice.copy(alpha = 0.45f) else scheme.outline
+    Row(
+        modifier
+            .fillMaxWidth()
+            .height(38.dp)
+            .then(if (style.fireIce) Modifier.glow(style.ice.copy(alpha = 0.5f), 19.dp, spread = 5.dp) else Modifier)
+            .clip(shape)
+            .background(if (style.fireIce) Color.White.copy(alpha = 0.05f) else scheme.background)
+            .border(1.dp, edge, shape),
+    ) {
+        options.forEachIndexed { i, option ->
+            val on = option == selected
+            if (i > 0) Box(Modifier.width(1.dp).fillMaxHeight().background(edge))
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .then(
+                        when {
+                            !on -> Modifier
+                            style.fireIce -> Modifier.background(style.fireBrush)
+                            else -> Modifier.background(scheme.primary)
+                        },
+                    )
+                    .clickable(role = Role.Tab) { onSelect(option) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    label(option),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = when {
+                        on -> if (style.fireIce) Color.White else scheme.onPrimary
+                        else -> scheme.onSurface
+                    },
+                )
+            }
         }
     }
 }

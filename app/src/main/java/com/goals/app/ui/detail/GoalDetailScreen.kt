@@ -45,6 +45,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.goals.app.ui.components.card
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -98,6 +100,9 @@ fun GoalDetailScreen(
     val project = goal.projectId?.let(state::project)
 
     Scaffold(
+
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
@@ -120,7 +125,7 @@ fun GoalDetailScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
     ) { padding ->
@@ -257,8 +262,7 @@ private fun CurrentPeriodCard(item: GoalItem, today: LocalDate, onLog: () -> Uni
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(scheme.surfaceContainerLow)
+            .card(shape = MaterialTheme.shapes.medium)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

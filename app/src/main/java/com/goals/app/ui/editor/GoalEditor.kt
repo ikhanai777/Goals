@@ -52,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -234,6 +235,9 @@ fun GoalEditorScreen(
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
     Scaffold(
+
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
@@ -245,7 +249,7 @@ fun GoalEditorScreen(
                         if (draft.errors().isEmpty()) onSave(draft)
                     }) { Text("Save") }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
     ) { padding ->

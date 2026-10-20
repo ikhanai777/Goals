@@ -6,15 +6,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.goals.app.ui.GoalsAppRoot
 import com.goals.app.ui.GoalsViewModel
+import com.goals.app.ui.theme.AppBackground
 import com.goals.app.ui.theme.GoalsTheme
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -29,8 +28,10 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handle(intent)
         setContent {
             val state by vm.state.collectAsStateWithLifecycle()
-            GoalsTheme(state.settings.theme, state.settings.density, state.settings.dynamicColor) {
-                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            val s = state.settings
+            GoalsTheme(s.theme, s.density, s.dynamicColor, s.style) {
+                Box(Modifier.fillMaxSize()) {
+                    AppBackground()
                     GoalsAppRoot(vm, state, BuildConfig.VERSION_NAME, openGoal.receiveAsFlow())
                 }
             }

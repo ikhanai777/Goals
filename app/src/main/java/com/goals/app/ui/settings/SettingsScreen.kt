@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.goals.app.data.AppSettings
 import com.goals.app.data.Density
 import com.goals.app.data.ThemeMode
+import com.goals.app.data.ThemeStyle
 import com.goals.app.ui.components.ConfirmDialog
 import com.goals.app.ui.components.TimePickerModal
 import com.goals.app.ui.theme.GoalsTheme
@@ -55,11 +56,14 @@ fun SettingsScreen(
     var pickingReminder by remember { mutableStateOf(false) }
 
     Scaffold(
+
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text("Settings", style = MaterialTheme.typography.titleLarge) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
     ) { padding ->
@@ -78,14 +82,21 @@ fun SettingsScreen(
 
             Group("Appearance")
             Choice(
-                "Theme", settings.theme, ThemeMode.entries,
-                { it.name.lowercase().replaceFirstChar(Char::titlecase) },
-            ) { v -> onUpdate { it.copy(theme = v) } }
+                "Style", settings.style, ThemeStyle.entries,
+                { if (it == ThemeStyle.FIRE_ICE) "Fire & Ice" else "Classic" },
+            ) { v -> onUpdate { it.copy(style = v) } }
+            val classic = settings.style == ThemeStyle.CLASSIC
+            if (classic) {
+                Choice(
+                    "Theme", settings.theme, ThemeMode.entries,
+                    { it.name.lowercase().replaceFirstChar(Char::titlecase) },
+                ) { v -> onUpdate { it.copy(theme = v) } }
+            }
             Choice(
                 "Density", settings.density, Density.entries,
                 { it.name.lowercase().replaceFirstChar(Char::titlecase) },
             ) { v -> onUpdate { it.copy(density = v) } }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (classic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 Toggle("Dynamic color", "Use wallpaper colors instead of cobalt", settings.dynamicColor) { v ->
                     onUpdate { it.copy(dynamicColor = v) }
                 }

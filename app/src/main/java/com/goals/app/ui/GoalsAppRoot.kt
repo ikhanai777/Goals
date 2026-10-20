@@ -45,6 +45,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.goals.app.ui.theme.GoalsTheme
+import com.goals.app.ui.components.glow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -138,6 +143,8 @@ fun GoalsAppRoot(
 
     val topLevel = route in Tabs.map { it.route }
     Scaffold(
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             if (topLevel) {
@@ -324,7 +331,11 @@ fun GoalsAppRoot(
 
 @Composable
 fun AppNavigationBar(route: String?, onNavigate: (String) -> Unit) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
+    val style = GoalsTheme.style
+    NavigationBar(
+        containerColor = if (style.fireIce) Color(0xEE0F1724) else MaterialTheme.colorScheme.background,
+        tonalElevation = 0.dp,
+    ) {
         Tabs.forEach { tab ->
             val selected = route == tab.route
             NavigationBarItem(
@@ -333,9 +344,9 @@ fun AppNavigationBar(route: String?, onNavigate: (String) -> Unit) {
                 icon = { Icon(if (selected) tab.selectedIcon else tab.icon, null) },
                 label = { Text(tab.label, style = MaterialTheme.typography.labelMedium) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedIconColor = if (style.fireIce) style.ice else MaterialTheme.colorScheme.primary,
+                    selectedTextColor = if (style.fireIce) Color.White else MaterialTheme.colorScheme.primary,
+                    indicatorColor = if (style.fireIce) style.fire.copy(alpha = 0.22f) else MaterialTheme.colorScheme.primaryContainer,
                 ),
             )
         }
@@ -346,13 +357,25 @@ fun AppNavigationBar(route: String?, onNavigate: (String) -> Unit) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AddButton(onClick: () -> Unit, onLongClick: () -> Unit) {
+    val style = GoalsTheme.style
     Surface(
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-        shadowElevation = 2.dp,
+        color = if (style.fireIce) Color.Transparent else MaterialTheme.colorScheme.primary,
+        contentColor = if (style.fireIce) Color.White else MaterialTheme.colorScheme.onPrimary,
+        shadowElevation = if (style.fireIce) 0.dp else 2.dp,
         modifier = Modifier
+            .then(if (style.fireIce) Modifier.glow(style.fire, 12.dp, spread = 10.dp, strength = 1.4f) else Modifier)
             .size(52.dp)
+            .then(
+                if (style.fireIce) {
+                    Modifier.background(
+                        Brush.linearGradient(listOf(Color(0xFF7FE0FF), style.ice, style.fire, Color(0xFFFF3D00))),
+                        MaterialTheme.shapes.large,
+                    )
+                } else {
+                    Modifier
+                },
+            )
             .semantics { contentDescription = "Add" }
             .combinedClickable(role = Role.Button, onClick = onClick, onLongClick = onLongClick),
     ) {

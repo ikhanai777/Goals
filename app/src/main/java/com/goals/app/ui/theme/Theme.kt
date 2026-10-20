@@ -15,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.goals.app.R
 import com.goals.app.data.Density
 import com.goals.app.data.ThemeMode
+import com.goals.app.data.ThemeStyle
 
 /** Colors outside the Material scheme: semantic states and the muted secondary text tone. */
 @Immutable
@@ -98,6 +100,50 @@ private val DarkExtra = ExtraColors(
     muted = Color(0xFF9AA0B0), track = Color(0xFF1F222B),
 )
 
+private val FireIceScheme = darkColorScheme(
+    primary = Color(0xFF5BB8FF),
+    onPrimary = Color(0xFF06121F),
+    primaryContainer = Color(0xFF12304A),
+    onPrimaryContainer = Color(0xFFCDEBFF),
+    secondary = Color(0xFFFF7A2F),
+    onSecondary = Color(0xFF1A0A00),
+    secondaryContainer = Color(0xFF4A2210),
+    onSecondaryContainer = Color(0xFFFFDCC8),
+    background = Color(0xFF0A111C),
+    onBackground = Color(0xFFEAF2FB),
+    surface = Color(0xFF101826),
+    onSurface = Color(0xFFEAF2FB),
+    surfaceVariant = Color(0xFF1A2433),
+    onSurfaceVariant = Color(0xFF93A3B8),
+    surfaceContainerLowest = Color(0xFF0A111C),
+    surfaceContainerLow = Color(0xFF121B29),
+    surfaceContainer = Color(0xFF131D2B),
+    surfaceContainerHigh = Color(0xFF182333),
+    surfaceContainerHighest = Color(0xFF1D2A3B),
+    outline = Color(0x40C8E6FF),
+    outlineVariant = Color(0xFF1E2A3A),
+    error = Color(0xFFFF6A3D),
+    onError = Color(0xFF1A0A00),
+)
+
+private val FireIceExtra = ExtraColors(
+    success = Color(0xFF5BE3B0), warning = Color(0xFFFFB04A),
+    muted = Color(0xFF8C9BB0), track = Color(0x24FFFFFF),
+)
+
+/** Accents for the Fire & Ice style; [fireIce] is false in the classic style. */
+@Immutable
+data class StyleTokens(
+    val fireIce: Boolean = false,
+    val fire: Color = Color(0xFFFF6A2B),
+    val ember: Color = Color(0xFFFFB347),
+    val ice: Color = Color(0xFF5BB8FF),
+    val frost: Color = Color(0xFFBFEAFF),
+) {
+    val fireBrush: Brush get() = Brush.horizontalGradient(listOf(Color(0xFFFF3D00), fire, ember))
+    val iceBrush: Brush get() = Brush.horizontalGradient(listOf(Color(0xFF2F7BFF), ice, frost))
+}
+
 /** Muted accents an Area can carry, shown only as a thin leading bar. */
 val AreaColors = listOf(
     Color(0xFF0047AB), Color(0xFF6A5ACD), Color(0xFF2E8B87), Color(0xFFB0793A),
@@ -138,10 +184,12 @@ private val AppShapes = Shapes(
 
 val LocalExtraColors = staticCompositionLocalOf { LightExtra }
 val LocalRowHeight = staticCompositionLocalOf<Dp> { 56.dp }
+val LocalStyle = staticCompositionLocalOf { StyleTokens() }
 
 object GoalsTheme {
     val extra: ExtraColors @Composable get() = LocalExtraColors.current
     val rowHeight: Dp @Composable get() = LocalRowHeight.current
+    val style: StyleTokens @Composable get() = LocalStyle.current
 }
 
 @Composable
@@ -149,14 +197,17 @@ fun GoalsTheme(
     theme: ThemeMode = ThemeMode.SYSTEM,
     density: Density = Density.COMFORTABLE,
     dynamicColor: Boolean = false,
+    style: ThemeStyle = ThemeStyle.CLASSIC,
     content: @Composable () -> Unit,
 ) {
-    val dark = when (theme) {
+    val fireIce = style == ThemeStyle.FIRE_ICE
+    val dark = fireIce || when (theme) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
     val scheme: ColorScheme = when {
+        fireIce -> FireIceScheme
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -165,7 +216,12 @@ fun GoalsTheme(
         else -> LightScheme
     }
     CompositionLocalProvider(
-        LocalExtraColors provides if (dark) DarkExtra else LightExtra,
+        LocalExtraColors provides when {
+            fireIce -> FireIceExtra
+            dark -> DarkExtra
+            else -> LightExtra
+        },
+        LocalStyle provides StyleTokens(fireIce = fireIce),
         LocalRowHeight provides if (density == Density.COMPACT) 48.dp else 56.dp,
     ) {
         MaterialTheme(colorScheme = scheme, typography = AppTypography, shapes = AppShapes, content = content)

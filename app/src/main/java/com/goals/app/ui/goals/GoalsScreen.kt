@@ -47,6 +47,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.goals.app.ui.components.card
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
@@ -90,6 +92,9 @@ fun GoalsScreen(
     val library = buildLibrary(state, filter, sort, query)
 
     Scaffold(
+
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
@@ -138,7 +143,7 @@ fun GoalsScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
     ) { padding ->
@@ -215,8 +220,7 @@ fun LibraryGoalRow(item: GoalItem, today: LocalDate, modifier: Modifier = Modifi
         modifier
             .fillMaxWidth()
             .heightIn(min = GoalsTheme.rowHeight)
-            .clip(MaterialTheme.shapes.small)
-            .background(scheme.surfaceContainerLow)
+            .card(shape = MaterialTheme.shapes.small)
             .clickable(onClick = onClick)
             .padding(end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -264,8 +268,7 @@ private fun ProjectRow(
         Modifier
             .fillMaxWidth()
             .heightIn(min = GoalsTheme.rowHeight)
-            .clip(MaterialTheme.shapes.small)
-            .background(scheme.surfaceContainerLow)
+            .card(shape = MaterialTheme.shapes.small)
             .clickable(onClick = onOpen),
         verticalAlignment = Alignment.CenterVertically,
     ) {
