@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Progress ring: slate-blue track, white arc, with a white check in the middle. -->
+    <path android:strokeColor="#6A5ACD" android:strokeWidth="6"
+        android:pathData="M54,32a22,22 0,1 1,0 44a22,22 0,1 1,0 -44z" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="6" android:strokeLineCap="round"
+        android:pathData="M54,32a22,22 0,0 1,22 22a22,22 0,0 1,-14 20.5" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="5" android:strokeLineCap="round"
+        android:strokeLineJoin="round" android:pathData="M44,55l7,7l13,-14" />
+</vector>
