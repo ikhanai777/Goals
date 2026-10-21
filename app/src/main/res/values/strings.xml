@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Goals</string>
+    <string name="widget_today_label">Today</string>
+    <string name="widget_today_description">What\'s due today, with one-tap logging</string>
+    <string name="widget_goal_label">Goal</string>
+    <string name="widget_goal_description">One goal\'s progress, or its streak at 1×1</string>
 </resources>

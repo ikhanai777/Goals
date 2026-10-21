@@ -9,7 +9,12 @@ import com.goals.app.reminders.ReminderScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import com.goals.app.widget.updateAllWidgets
 
 /** Manual dependency container; small enough that a DI framework would add more than it saves. */
 class AppContainer(context: Context) {
@@ -29,5 +34,18 @@ class GoalsApp : Application() {
         container = AppContainer(this)
         container.reminderScheduler.createChannels()
         container.scope.launch { container.repository.seedAreasIfEmpty() }
+        refreshWidgetsOnChange()
+    }
+
+    /** Keeps home-screen widgets in step with edits made anywhere: app, notifications or widgets. */
+    @OptIn(FlowPreview::class)
+    private fun refreshWidgetsOnChange() {
+        val repo = container.repository
+        container.scope.launch {
+            combine(repo.goals, repo.entries, repo.milestones, container.settings.settings) { _, _, _, _ -> }
+                .drop(1)
+                .debounce(300)
+                .collect { updateAllWidgets(this@GoalsApp) }
+        }
     }
 }
